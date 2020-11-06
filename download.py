@@ -1,21 +1,29 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import requests
+from bs4 import BeautifulSoup
 
 class DataDownloader:
     # inicializátor - obsahuje volitelné parametry:
     def __init__(self, url='https://ehw.fit.vutbr.cz/izv/', folder ='data', cache_filename ='data_{}.pkl.gz'):
-        kokot = 5
+        ahoj = 5
 
     # funkce stáhne do datové složky folder všechny soubory s daty z adresy url.
     def download_data(self):
-        sdasd = 1
+        # headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}
+        r = requests.get("https://ehw.fit.vutbr.cz/izv/", headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"},allow_redirects=True)
+        #print (r.text)
+        result = BeautifulSoup(r.text, "html.parser")
+        zip_html_tag = result.findAll(class_='btn btn-sm btn-primary')
+        v = 0
+        for item in zip_html_tag:
+            url = item.get('href')
+            link_to_download = 'https://ehw.fit.vutbr.cz/izv/' + url
+            just_zip_name = url.split("/")
 
-    UserAgent()
+            download_request = requests.get(link_to_download, stream=True)
+            v += 1
+            with open(just_zip_name[1] + str(v), 'wb') as fd:
+                fd.write(download_request.content)
 
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}
-    r = requests.get("https://ehw.fit.vutbr.cz/izv/", allow_redirects=True)
 
     """nejsou data pro daný kraj stažená, stáhne je do datové složky folder. Poté
     je pro daný region specifikovaný tříznakovým kódem (viz tabulka níže) vždy
@@ -41,7 +49,6 @@ class DataDownloader:
 
 
 
-
 """Pro každý kraj získá data s využitím funkce parse_region_data tak, že se
 budou výsledky uchovávat v paměti (v nějakém atributu instance třídy) a ukládat do
 pomocného cache souboru pomocí následujícího schématu:
@@ -60,12 +67,10 @@ datasetu).
 """
 
 
-
-
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print('PyCharm')
     kokos = DataDownloader()
-    print(kokos.parse_region_data("kokos1"))
+    kokos.download_data()
+
 

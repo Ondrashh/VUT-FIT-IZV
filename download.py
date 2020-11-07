@@ -1,27 +1,51 @@
 import requests
+import os
+import csv
 from bs4 import BeautifulSoup
+from enum import Enum
+from zipfile import ZipFile
+from io import TextIOWrapper
+import numpy as np
 
 class DataDownloader:
+    class Regions(Enum):
+        PHA = "00.csv"
+        STC = "01.csv"
+        JHC = "02.csv"
+        PLK = "03.csv"
+        KVK = "05.csv"
+        ULK = "04.csv"
+        LBL = "18.csv"
+        HKK = "19.csv"
+        PAK = "17.csv"
+        OLK = "14.csv"
+        MSK = "07.csv"
+        JHM = "06.csv"
+        ZLK = "15.csv"
+        VYS = "16.csv"
+
     # inicializátor - obsahuje volitelné parametry:
     def __init__(self, url='https://ehw.fit.vutbr.cz/izv/', folder ='data', cache_filename ='data_{}.pkl.gz'):
-        ahoj = 5
+        self.url = url
+        self.folder = folder
+        self.cache_filename = cache_filename
 
     # funkce stáhne do datové složky folder všechny soubory s daty z adresy url.
     def download_data(self):
-        # headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}
+
         r = requests.get("https://ehw.fit.vutbr.cz/izv/", headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"},allow_redirects=True)
-        #print (r.text)
+
         result = BeautifulSoup(r.text, "html.parser")
         zip_html_tag = result.findAll(class_='btn btn-sm btn-primary')
-        v = 0
+
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
         for item in zip_html_tag:
             url = item.get('href')
             link_to_download = 'https://ehw.fit.vutbr.cz/izv/' + url
             just_zip_name = url.split("/")
-
             download_request = requests.get(link_to_download, stream=True)
-            v += 1
-            with open(just_zip_name[1] + str(v), 'wb') as fd:
+            with open(self.folder + '/' + just_zip_name[1], 'wb') as fd:
                 fd.write(download_request.content)
 
 
@@ -37,7 +61,31 @@ class DataDownloader:
     sloupec zvolte vhodný datový typ (t.j. snažte se vyhnout textovým řetězcům,
     vyřešte desetinnou čárku atp.). """
     def parse_region_data(self, region):
-        sdasd = 1
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
+            self.download_data()
+            data_head = ["p1", "p36", "p37", "p2a", "weekday(p2a)", "p2b", "p6", "p7", "p8", "p9", "p10", "p11", "p12",
+                         "p13a", "p13b", "p13c", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23",
+                         "p24", "p27", "p28", "p34", "p35", "p39", "p44", "p45a", "p47", "p48a", "p49", "p50a", "p50b",
+                         "p51", "p52", "p53", "p55a", "p57", "p58", "a", "b", "d", "e", "f", "g", "h", "i", "j", "k",
+                         "l", "n", "o", "p", "q", "r", "s", "t", "p5a", "region"]
+            #neco = np.ndarray[0][0]
+            result_tuple = tuple(data_head, list[np.ndarray])
+        try:
+            for file in os.listdir(self.folder):
+                # print(self.folder + '/' + self.Regions[region].value)
+                print(file)
+                current_zip = ZipFile(self.folder + '/' + file)
+                with current_zip.open(self.Regions[region].value, 'r') as csvfile:
+                    current_csv = csv.reader(TextIOWrapper(csvfile, encoding='windows-1250'))
+                    print( sum(1 for _ in current_csv))
+                    #for a in current_csv:
+                      #  print(a)
+
+        except KeyError:
+            print("Not a valid region!")
+            exit(101)
+
 
     """ get_list(self, regions = None)
     Vrací zpracovaná data pro vybrané kraje (regiony). Argument regions specifikuje
@@ -71,6 +119,7 @@ datasetu).
 if __name__ == '__main__':
     print('PyCharm')
     kokos = DataDownloader()
-    kokos.download_data()
+    # kokos.download_data()
+    kokos.parse_region_data("PHA")
 
 

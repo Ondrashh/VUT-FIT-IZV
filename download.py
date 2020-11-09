@@ -64,23 +64,81 @@ class DataDownloader:
         if not os.path.exists(self.folder):
             os.makedirs(self.folder)
             self.download_data()
-            data_head = ["p1", "p36", "p37", "p2a", "weekday(p2a)", "p2b", "p6", "p7", "p8", "p9", "p10", "p11", "p12",
+        data_head = ["p1", "p36", "p37", "p2a", "weekday(p2a)", "p2b", "p6", "p7", "p8", "p9", "p10", "p11", "p12",
                          "p13a", "p13b", "p13c", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23",
                          "p24", "p27", "p28", "p34", "p35", "p39", "p44", "p45a", "p47", "p48a", "p49", "p50a", "p50b",
                          "p51", "p52", "p53", "p55a", "p57", "p58", "a", "b", "d", "e", "f", "g", "h", "i", "j", "k",
                          "l", "n", "o", "p", "q", "r", "s", "t", "p5a", "region"]
-            #neco = np.ndarray[0][0]
-            result_tuple = tuple(data_head, list[np.ndarray])
+
+        # result_tuple = tuple(data_head, list[np.ndarray])
+        lines_count = 0
+        month = 0
         try:
             for file in os.listdir(self.folder):
                 # print(self.folder + '/' + self.Regions[region].value)
-                print(file)
+                #print(file)
+
+                current_file = self.folder + '/' + file
+                rok_zip = current_file.rsplit('-', 2)
+                if(file != "datagis2016.zip"):
+                    if(len(rok_zip) > 2):
+                        if(rok_zip[2] == "2020.zip"):
+                            if(int(month) < int(rok_zip[1])):
+                                month = rok_zip[1]
+
+            year2020 = "datagis-" + month + "-2020.zip"
+            files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
+                                "datagis-rok-2019.zip", year2020]
+
+            item_array = np.ndarray(1)
+
+
+
+            item_array = np.append(kokos, item_array)
+            print(files_to_extract)
+            for file in files_to_extract:
                 current_zip = ZipFile(self.folder + '/' + file)
                 with current_zip.open(self.Regions[region].value, 'r') as csvfile:
-                    current_csv = csv.reader(TextIOWrapper(csvfile, encoding='windows-1250'))
-                    print( sum(1 for _ in current_csv))
-                    #for a in current_csv:
-                      #  print(a)
+                    current_csv = list(csv.reader(TextIOWrapper(csvfile, encoding='windows-1250')))
+                    # print(current_csv[1][0])
+                    """ var = sum(1 for _ in current_csv)
+                    lines_count += var
+                    print(lines_count) """
+                    # item_array = np.append()
+                    # for line in current_csv:
+                    #  print(line)
+            # print(item_array)
+            cols = []
+            for j in range(0, 48):
+                a = np.array([])
+                cols.append(a)
+
+            for file in files_to_extract:
+                with ZipFile(self.folder + '/' + file, 'r') as zip:
+                    data = zip.read(self.Regions[region].value)
+                    data = data.decode("windows-1250")
+                    data = data.replace('"', "")
+                    data = data.replace(',', '.')
+                    for d in data.splitlines():
+                        d = d.split(';')
+                        for j in range(0, 45):
+                            cols[j] = np.append(cols[j], d[j])
+                        cols[45] = np.append(cols[45], d[47])
+                        cols[46] = np.append(cols[46], d[48])
+                        cols[47] = np.append(cols[47], region)
+                print(cols[1])
+            """for a in current_csv:
+                        print("SDASsd")
+                        nd_a = np.array(a)
+                        print(nd_a)"""
+
+
+
+
+
+
+
+
 
         except KeyError:
             print("Not a valid region!")

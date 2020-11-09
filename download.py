@@ -90,10 +90,7 @@ class DataDownloader:
             files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
                                 "datagis-rok-2019.zip", year2020]
 
-            item_array = np.ndarray(1)
-
-
-
+            """item_array = np.ndarray(1)
             item_array = np.append(kokos, item_array)
             print(files_to_extract)
             for file in files_to_extract:
@@ -101,36 +98,44 @@ class DataDownloader:
                 with current_zip.open(self.Regions[region].value, 'r') as csvfile:
                     current_csv = list(csv.reader(TextIOWrapper(csvfile, encoding='windows-1250')))
                     # print(current_csv[1][0])
-                    """ var = sum(1 for _ in current_csv)
+                    var = sum(1 for _ in current_csv)
                     lines_count += var
-                    print(lines_count) """
+                    print(lines_count)
                     # item_array = np.append()
                     # for line in current_csv:
                     #  print(line)
-            # print(item_array)
+            # print(item_array)"""
+
             cols = []
-            for j in range(0, 48):
+            for j in range(0, 64):
                 a = np.array([])
                 cols.append(a)
-
+            #print(cols)
+            result_array =  []
             for file in files_to_extract:
                 with ZipFile(self.folder + '/' + file, 'r') as zip:
                     data = zip.read(self.Regions[region].value)
+                    # print(data)
                     data = data.decode("windows-1250")
-                    data = data.replace('"', "")
-                    data = data.replace(',', '.')
+                    #data = data.replace('"', "")
+
+                    #var = np.transpose(data)
+                    #print(var)
+                    #print(data.count())
+                    #data = data.replace(',', '.')
                     for d in data.splitlines():
                         d = d.split(';')
-                        for j in range(0, 45):
-                            cols[j] = np.append(cols[j], d[j])
-                        cols[45] = np.append(cols[45], d[47])
-                        cols[46] = np.append(cols[46], d[48])
-                        cols[47] = np.append(cols[47], region)
-                print(cols[1])
-            """for a in current_csv:
-                        print("SDASsd")
-                        nd_a = np.array(a)
-                        print(nd_a)"""
+                        d = np.transpose(d)
+                        mezi = [region]
+                        d = np.append(d,mezi)
+                        # print(d)
+                        result_array.append(d)
+
+            # print(result_array[-1])
+            colums_rule = np.transpose(result_array)
+            for j in range(0, 64):
+                cols[j] = colums_rule[j]
+            print("Parser did it, mom get the camera")
 
 
 
@@ -178,6 +183,6 @@ if __name__ == '__main__':
     print('PyCharm')
     kokos = DataDownloader()
     # kokos.download_data()
-    kokos.parse_region_data("PHA")
+    kokos.parse_region_data("JHM")
 
 

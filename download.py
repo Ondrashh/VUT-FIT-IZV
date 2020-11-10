@@ -17,7 +17,7 @@ class DataDownloader:
         PLK = "03.csv"
         KVK = "05.csv"
         ULK = "04.csv"
-        LBL = "18.csv"
+        LBK = "18.csv"
         HKK = "19.csv"
         PAK = "17.csv"
         OLK = "14.csv"
@@ -89,9 +89,9 @@ class DataDownloader:
                                 month = rok_zip[1]
 
             year2020 = "datagis-" + month + "-2020.zip"
-            files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
-                                "datagis-rok-2019.zip", year2020]
-
+            #files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
+            #                    "datagis-rok-2019.zip", year2020]
+            files_to_extract = ["datagis2016.zip"]
             """item_array = np.ndarray(1)
             item_array = np.append(kokos, item_array)
             print(files_to_extract)
@@ -116,28 +116,64 @@ class DataDownloader:
             result_array =  []
             for file in files_to_extract:
                 with ZipFile(self.folder + '/' + file, 'r') as zip:
-                    data = zip.read(self.Regions[region].value)
-                    # print(data)
-                    data = data.decode("windows-1250")
-                    #data = data.replace('"', "")
+                    with zip.open(self.Regions[region].value) as file:
+                        reader = csv.reader(TextIOWrapper(file, "windows-1250",),delimiter=';')
+                        for row in reader:
+                            print(row[0])
+                            print(np.shape(row))
 
-                    #var = np.transpose(data)
-                    #print(var)
-                    #print(data.count())
-                    #data = data.replace(',', '.')
-                    for d in data.splitlines():
-                        d = d.split(';')
-                        d = np.transpose(d)
-                        mezi = [region]
-                        d = np.append(d,mezi)
+                            result_array.append(row)
+                            # print(data)
+                            # data = data.decode("windows-1250")
+                            # data = data.replace('"', "")
+                            # array = []
+                            # var = np.transpose(data)
+                            # print(var)
+                            # print(data.count())
+                            # data = data.replace(',', '.')
+                            """for d in data.splitlines():
+                                #print(d)
+                                d = d.split(';')
+                                d = np.transpose(d)
+                                d = np.append(d, [region])"""
+                            # print(d[0])
+                        #print(d[63])
+                        #array.append(d)
+                        #print(np.shape(d))
+                        #print(d[0][1])
+
+                        #print(d)
+                        #print(np.shape(d))
                         # print(d)
-                        result_array.append(d)
+                        # print(np.shape(d))
+                        #d = np.transpose(d)
+                        #print(np.shape(d))
+                        #print(np.shape(d))
 
+                        # print(np.shape(d))
+                        # print(np.shape(result_array))
+                        #result_array.append(d)
+                        #dalsi = result_array
+                        #dalsi = np.transpose(dalsi)
+                        # print(dalsi)
+                        #print(np.shape(result_array))
+            # print(np.shape(result_array[500]))
+            # print(cols)
+            #print(np.shape(result_array))
             # print(result_array[-1])
-            colums_rule = np.transpose(result_array)
-            for j in range(0, 64):
-                cols[j] = colums_rule[j]
+            # print(np.shape(result_array))
+            #colums_rule = np.transpose(result_array)
+            #print(np.shape(colums_rule))
+            #print(cols[0])
+                # print(colums_rule[j])
+            print(result_array)
             print("Parser did it, mom get the camera")
+            """for item in result_array:
+                for j in range(0, 64):
+                    a = np.array([])
+                    cols.append(a)"""
+            np.transpose(result_array)
+            print(np.shape(result_array))
             var = (data_head, cols)
             return var
 
@@ -153,28 +189,30 @@ class DataDownloader:
     je dvojice ve stejném formátu, jako návratová hodnota funkce """
     def get_list(self, regions=None):
         if (regions == None):
-            print("Ted bych delal vsechny")
-        else:
-            for region in regions:
-                try:
-                    cache_file_name = self.cache_filename.replace("{}", region)
-                    with gzip.open(cache_file_name, 'rb') as f:
-                        print(region, " : Beru ze souboru")
-                        datas = pickle.load(f)
-                        # return datas
-                except FileNotFoundError:
-                    print(region, " : Parsuju sam")
-                    cache_file_name = self.cache_filename.replace("{}", region)
-                    datas = self.parse_region_data(region)
-                    with gzip.open(cache_file_name, 'wb') as f:
-                        pickle.dump(datas, f)
-                        f.close()
-                # print("Delam to pro tenhle:", region)
+            regions = []
+            for region in self.Regions:
+                regions.append(region.name)
+            print(regions)
 
-            """ with gzip.open('data.pkl.gz', 'wb') as f:
-                pickle.dump(var, f)
-                f.close()"""
+        for region in regions:
+            try:
+                cache_file_name = self.cache_filename.replace("{}", region)
+                with gzip.open(cache_file_name, 'rb') as f:
+                    print(region, " : Beru ze souboru")
+                    datas = pickle.load(f)
 
+                    return datas
+            except FileNotFoundError:
+                print(region, " : Parsuju sam")
+                cache_file_name = self.cache_filename.replace("{}", region)
+                datas = self.parse_region_data(region)
+                #print(datas[1])
+                """with gzip.open(cache_file_name, 'wb') as f:
+                     pickle.dump(datas, f)
+                     f.close()"""
+                print("Delam to pro tenhle:", region)
+                #print(datas[1][0])
+                return datas
 
 """Pro každý kraj získá data s využitím funkce parse_region_data tak, že se
 budou výsledky uchovávat v paměti (v nějakém atributu instance třídy) a ukládat do
@@ -200,6 +238,6 @@ if __name__ == '__main__':
     kokos = DataDownloader()
     # kokos.download_data()
     # damn  = kokos.parse_region_data("JHM")
-    kokos.get_list(("JHM", "KHA"))
+    kokos.get_list(["PHA"])
     # print(damn)
 

@@ -1,6 +1,8 @@
 import requests
 import os
 import csv
+import pickle
+import gzip
 from bs4 import BeautifulSoup
 from enum import Enum
 from zipfile import ZipFile
@@ -136,14 +138,8 @@ class DataDownloader:
             for j in range(0, 64):
                 cols[j] = colums_rule[j]
             print("Parser did it, mom get the camera")
-
-
-
-
-
-
-
-
+            var = (data_head, cols)
+            return var
 
         except KeyError:
             print("Not a valid region!")
@@ -155,9 +151,29 @@ class DataDownloader:
     seznam (list) požadovaných krajů jejich třípísmennými kódy. Pokud seznam není
     uveden (je použito None), zpracují se všechny kraje včetně Prahy. Výstupem funkce
     je dvojice ve stejném formátu, jako návratová hodnota funkce """
-    def get_list(self, regions = None):
-        sdasd = 1
+    def get_list(self, regions=None):
+        if (regions == None):
+            print("Ted bych delal vsechny")
+        else:
+            for region in regions:
+                try:
+                    cache_file_name = self.cache_filename.replace("{}", region)
+                    with gzip.open(cache_file_name, 'rb') as f:
+                        print(region, " : Beru ze souboru")
+                        datas = pickle.load(f)
+                        # return datas
+                except FileNotFoundError:
+                    print(region, " : Parsuju sam")
+                    cache_file_name = self.cache_filename.replace("{}", region)
+                    datas = self.parse_region_data(region)
+                    with gzip.open(cache_file_name, 'wb') as f:
+                        pickle.dump(datas, f)
+                        f.close()
+                # print("Delam to pro tenhle:", region)
 
+            """ with gzip.open('data.pkl.gz', 'wb') as f:
+                pickle.dump(var, f)
+                f.close()"""
 
 
 """Pro každý kraj získá data s využitím funkce parse_region_data tak, že se
@@ -183,6 +199,7 @@ if __name__ == '__main__':
     print('PyCharm')
     kokos = DataDownloader()
     # kokos.download_data()
-    kokos.parse_region_data("JHM")
-
+    # damn  = kokos.parse_region_data("JHM")
+    kokos.get_list(("JHM", "KHA"))
+    # print(damn)
 

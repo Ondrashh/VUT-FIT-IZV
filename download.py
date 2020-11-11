@@ -1,3 +1,9 @@
+# Projekt do předmětu IZV, První část
+# Zpracoval: Ondřej Pavlacký (xpavla15) 3BIT
+# Implementace modulu download.py
+# Vytvořeno: 11.11.2020
+# VUT FIT
+
 import requests
 import os
 import csv
@@ -7,9 +13,12 @@ from bs4 import BeautifulSoup
 from enum import Enum
 from zipfile import ZipFile
 from io import TextIOWrapper
+from datetime import datetime
 import numpy as np
 
+# Hlavní třída DataDownloader, která stahuje zip -> csv soubory které zpracuje a následně uchovává
 class DataDownloader:
+    # Vytvoření Enum Regions pro snadnou práci se zkratkami a jejich přiřazenými soubory
     class Regions(Enum):
         PHA = "00.csv"
         STC = "01.csv"
@@ -27,12 +36,14 @@ class DataDownloader:
         VYS = "16.csv"
 
     # inicializátor - obsahuje volitelné parametry:
+    # V inicializátoru probíhá přířazení argumentů, abychom věděli s jakým URL a složkami mám pracovat
     def __init__(self, url='https://ehw.fit.vutbr.cz/izv/', folder ='data', cache_filename ='data_{}.pkl.gz'):
         self.url = url
         self.folder = folder
         self.cache_filename = cache_filename
 
     # funkce stáhne do datové složky folder všechny soubory s daty z adresy url.
+    # Funkce po stáhnutí zip souborů z přiřazené URL adresy přečte 
     def download_data(self):
 
         r = requests.get("https://ehw.fit.vutbr.cz/izv/", headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"},allow_redirects=True)
@@ -89,9 +100,9 @@ class DataDownloader:
                                 month = rok_zip[1]
 
             year2020 = "datagis-" + month + "-2020.zip"
-            #files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
-            #                    "datagis-rok-2019.zip", year2020]
-            files_to_extract = ["datagis2016.zip"]
+            files_to_extract = ["datagis2016.zip", "datagis-rok-2017.zip", "datagis-rok-2018.zip",
+                               "datagis-rok-2019.zip", year2020]
+
             """item_array = np.ndarray(1)
             item_array = np.append(kokos, item_array)
             print(files_to_extract)
@@ -109,20 +120,49 @@ class DataDownloader:
             # print(item_array)"""
 
             cols = []
-            for j in range(0, 64):
-                a = np.array([])
+            for j in range(0, 6):
+                if(j == 3 ):
+                    a = np.array([], dtype=str)
+                else:
+                    a = np.array([], dtype=int)
                 cols.append(a)
-            #print(cols)
+            test = [None]*65
             result_array =  []
             for file in files_to_extract:
                 with ZipFile(self.folder + '/' + file, 'r') as zip:
                     with zip.open(self.Regions[region].value) as file:
                         reader = csv.reader(TextIOWrapper(file, "windows-1250",),delimiter=';')
                         for row in reader:
-                            print(row[0])
-                            print(np.shape(row))
+                            #print(row[0])
+                            iter = 0
+                            for i in row:
+                                try:
+                                    if(iter == 3):
+                                        test[iter] = datetime.strptime(i, "%Y-%m-%d")
+                                        #print(test[iter].year)
+                                    else:
+                                        test[iter] = int(i)
+                                    iter += 1
+                                except ValueError:
+                                    test[iter] = i
+                                    iter += 1
+                            test[64] = region
+                            #print(test[0])
+                            # print(row[0])
+                            # print(np.shape(row)
+                            #print(np.shape(row))
+                            #row = np.transpose(row)
+                            #test = np.append(test, [region])
+                            conv = int(row[0])
+                            #print(type(conv))
+                            #row[0] = conv
+                            #print(type(row[0]))
+                            #print(type(int(row[0])))
 
-                            result_array.append(row)
+                            result_array.append(test)
+
+
+
                             # print(data)
                             # data = data.decode("windows-1250")
                             # data = data.replace('"', "")
@@ -166,15 +206,26 @@ class DataDownloader:
             #print(np.shape(colums_rule))
             #print(cols[0])
                 # print(colums_rule[j])
-            print(result_array)
+
+            #print(result_array[0])
             print("Parser did it, mom get the camera")
             """for item in result_array:
                 for j in range(0, 64):
                     a = np.array([])
                     cols.append(a)"""
-            np.transpose(result_array)
-            print(np.shape(result_array))
-            var = (data_head, cols)
+
+            result_array= np.transpose(result_array)
+            #kokos = result_array[0]
+            #print(type(kokos))
+            #kokos1 = (map(int, kokos))
+            #print(type(kokos1))
+            #result_array[0] = list(map(int, result_array[0]))
+            #print(type(result_array[0][0]))
+            #print(result_array)
+            #print(np.shape(result_array))
+            # pr
+            var = (data_head, result_array)
+            #print(var)
             return var
 
         except KeyError:
@@ -188,32 +239,48 @@ class DataDownloader:
     uveden (je použito None), zpracují se všechny kraje včetně Prahy. Výstupem funkce
     je dvojice ve stejném formátu, jako návratová hodnota funkce """
     def get_list(self, regions=None):
+        cols = []
+        for j in range(0, 65):
+            if (j == 3):
+                a = np.array([], dtype=str)
+            else:
+                a = np.array([], dtype=int)
+            cols.append(a)
         if (regions == None):
             regions = []
             for region in self.Regions:
                 regions.append(region.name)
             print(regions)
-
+        get_list_result = []
         for region in regions:
             try:
                 cache_file_name = self.cache_filename.replace("{}", region)
                 with gzip.open(cache_file_name, 'rb') as f:
                     print(region, " : Beru ze souboru")
                     datas = pickle.load(f)
+                    for i in range(0, 65):
+                        cols[i] = np.append(cols[i], datas[1][i])
 
-                    return datas
+
             except FileNotFoundError:
                 print(region, " : Parsuju sam")
                 cache_file_name = self.cache_filename.replace("{}", region)
                 datas = self.parse_region_data(region)
-                #print(datas[1])
+                for i in range(0, 65):
+                    cols[i] =  np.append(cols[i], datas[1][i])
                 """with gzip.open(cache_file_name, 'wb') as f:
                      pickle.dump(datas, f)
                      f.close()"""
+                #print(cols)
+                #print(cols[64])
                 print("Delam to pro tenhle:", region)
-                #print(datas[1][0])
-                return datas
-
+                #print(datas[0])
+                #print(get_list_result)
+        list_of_all = (datas[0], cols)
+        # print(type(datas[1]))
+        #rint(cols)
+        #print(np.shape(cols))
+        return list_of_all
 """Pro každý kraj získá data s využitím funkce parse_region_data tak, že se
 budou výsledky uchovávat v paměti (v nějakém atributu instance třídy) a ukládat do
 pomocného cache souboru pomocí následujícího schématu:
@@ -238,6 +305,6 @@ if __name__ == '__main__':
     kokos = DataDownloader()
     # kokos.download_data()
     # damn  = kokos.parse_region_data("JHM")
-    kokos.get_list(["PHA"])
+    kokos.get_list(["VYS"])
     # print(damn)
 

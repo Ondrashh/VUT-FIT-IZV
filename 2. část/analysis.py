@@ -15,12 +15,13 @@ import os
 import pickle
 import gzip
 
+
 # muzete pridat libovolnou zakladni knihovnu ci knihovnu predstavenou na prednaskach
 # dalsi knihovny pak na dotaz
 
+
 # Ukol 1: nacteni dat
 def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
-
     # Kontrola na existenci souboru
     if not os.path.isfile(filename):
         print("Soubor neexistuje")
@@ -32,7 +33,7 @@ def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
 
         # Získání dat z formátu pickle
         datas = pd.DataFrame(unpickle)
-        if(verbose == True):
+        if verbose:
             # Výpis původního využití paměti (1MB = 1048576B) viz. zadání
             print("origin_size={:.1f} MB".format(datas.memory_usage(index=False, deep=True).sum() / 1048576))
 
@@ -81,8 +82,6 @@ def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
         datas["p57"] = datas["p57"].astype("int8")
         datas["p58"] = datas["p58"].astype("int8")
 
-
-
         datas["weekday(p2a)"] = datas["weekday(p2a)"].astype("int8")
         datas["p13a"] = datas["p13a"].astype("int8")
         datas["p13b"] = datas["p13b"].astype("int8")
@@ -93,10 +92,11 @@ def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
         datas["date"] = datas["p2a"]
 
         # Pokud je zadán výpis dat
-        if (verbose == True):
+        if verbose:
             # Výpis nového (upraveného) využití paměti (1MB = 1048576B) viz. zadání
             print("new size={:.1f} MB".format(datas.memory_usage(index=False, deep=True).sum() / 1048576))
-        return  datas
+        return datas
+
 
 # Ukol 2: následky nehod v jednotlivých regionech
 def plot_conseq(df: pd.DataFrame, fig_location: str = None,
@@ -128,21 +128,20 @@ def plot_conseq(df: pd.DataFrame, fig_location: str = None,
     ax[1].grid(linestyle='dashed')
     ax[1].set_axisbelow(True)
     sns.barplot(data=p13c_sorted, x='region', y='p13c', ax=ax[2])
-    ax[2].set(ylabel='Lehce zranění', xlabel='' )
+    ax[2].set(ylabel='Lehce zranění', xlabel='')
     ax[2].set_facecolor('#E6E6E6')
     ax[2].grid(linestyle='dashed')
     ax[2].set_axisbelow(True)
-    sns.barplot(data=total_count,x='unique_values', y='counts', ax=ax[3])
+    sns.barplot(data=total_count, x='unique_values', y='counts', ax=ax[3])
     ax[3].set(ylabel='Počet všech nehod', xlabel='')
     ax[3].set_facecolor('#E6E6E6')
     ax[3].grid(linestyle='dashed')
     ax[3].set_axisbelow(True)
     fig.tight_layout()
 
-
     # Uložení obrázku podle podmínky, kotrola adresáře a při neexistujícím, vytvoření nového
     # Musím prvně ukládat, protože jinak se to neuloží
-    if(fig_location != None):
+    if fig_location is not None:
         d = os.path.dirname(fig_location)
         # Viz časté chyby v první části
         if d and not os.path.isdir(d):
@@ -150,18 +149,23 @@ def plot_conseq(df: pd.DataFrame, fig_location: str = None,
         # Samotné uložení obrázku
         plt.savefig(fig_location)
     # Podmínka pro vykreslení grafu
-    if(show_figure == True):
+    if show_figure:
         fig.show()
-
 
 
 # Ukol3: příčina nehody a škoda
 def plot_damage(df: pd.DataFrame, fig_location: str = None,
                 show_figure: bool = False):
-
-    df["range"] = pd.cut(df["p14"], [-1, 50, 200, 500, 1000, float("inf")], labels=["<50", "50-200", "200-500", "500-1000", ">1000"])
-    df["p12"] = pd.cut(df["p12"], [0, 201, 301, 401, 501, 601, 1000], labels=["nezaviněná řidičem", "nepřiměřená rychlost jízdy", "nesprávné předjíždění", "nedání přednosti v jízdě", "nesprávný způsob jízdy", "technická závada vozidla"])
-    grouped = df[["region", "p12", "p2b", "p14", "range"]].groupby(["region", "p12", "range"], as_index=False).agg({"p2b": "count"})
+    # Filtrování podle škody pomocí cut
+    df["range"] = pd.cut(df["p14"], [-1, 50, 200, 500, 1000, float("inf")],
+                         labels=["<50", "50-200", "200-500", "500-1000", ">1000"])
+    # Filtrování pomocí typu nehody
+    df["p12"] = pd.cut(df["p12"], [0, 201, 301, 401, 501, 601, 1000],
+                       labels=["nezaviněná řidičem", "nepřiměřená rychlost jízdy", "nesprávné předjíždění",
+                               "nedání přednosti v jízdě", "nesprávný způsob jízdy", "technická závada vozidla"])
+    # Seskupené hodnoty
+    grouped = df[["region", "p12", "p2b", "p14", "range"]].groupby(["region", "p12", "range"], as_index=False).agg(
+        {"p2b": "count"})
     region_HKK = grouped[grouped["region"] == "HKK"]
     region_JHM = grouped[grouped["region"] == "JHM"]
     region_OLK = grouped[grouped["region"] == "OLK"]
@@ -170,14 +174,13 @@ def plot_damage(df: pd.DataFrame, fig_location: str = None,
     fig, axes = plt.subplots(2, 2, figsize=(8, 8))
     ax = axes.flatten()
 
+    print("Vyfiltrováno, není čas zobrazit")
     # Vytvoření titulku
-    fig.suptitle('Úkol 3. - regiony', fontsize=20)
     # Použití barplotu podle specifikace v zadání = sloupcové grafy
-    sns.barplot(data=region_HKK, ax=ax[0])
 
     # Uložení obrázku podle podmínky, kotrola adresáře a při neexistujícím, vytvoření nového
     # Musím prvně ukládat, protože jinak se to neuloží
-    if(fig_location != None):
+    if fig_location is not None:
         d = os.path.dirname(fig_location)
         # Viz časté chyby v první části
         if d and not os.path.isdir(d):
@@ -185,14 +188,15 @@ def plot_damage(df: pd.DataFrame, fig_location: str = None,
         # Samotné uložení obrázku
         plt.savefig(fig_location)
     # Podmínka pro vykreslení grafu
-    if(show_figure == True):
+    if show_figure:
         fig.show()
 
 
 # Ukol 4: povrch vozovky
 def plot_surface(df: pd.DataFrame, fig_location: str = None,
                  show_figure: bool = False):
-    pass;
+    print("Bohužel už není čas")
+    pass
 
 
 if __name__ == "__main__":

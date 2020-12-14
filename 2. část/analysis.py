@@ -36,13 +36,13 @@ def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
             # Výpis původního využití paměti (1MB = 1048576B) viz. zadání
             print("origin_size={:.1f} MB".format(datas.memory_usage(index=False, deep=True).sum() / 1048576))
         # Změny typů z obj. na int
-        datas["p36"] = datas["p36"].astype("int")
-        datas["p36"] = datas["p36"].astype("int8")
+
+        datas = datas[["p2b", "p2a", "p13a", "p13b", "p13c", "region", "p12"]]
         datas["p2b"] = datas["p2b"].astype("int8")
-        datas["p6"] = datas["p6"].astype("int8")
         datas["p13a"] = datas["p13a"].astype("int8")
         datas["p13b"] = datas["p13b"].astype("int8")
-        datas.drop(columns=['p2b'])
+        datas["p13c"] = datas["p13c"].astype("int8")
+        # datas.drop(columns=['p32'])
         # Přetypování na datum
         datas["p2a"] = pd.to_datetime(datas["p2a"], format='%Y-%m-%d')
         # Vytvoření nového sloupce dat viz. zadání
@@ -115,7 +115,7 @@ def plot_conseq(df: pd.DataFrame, fig_location: str = None,
 def plot_damage(df: pd.DataFrame, fig_location: str = None,
                 show_figure: bool = False):
     grouped = df[["region", "p12"]].groupby(["region", "p12"], as_index=False)
-    yay = grouped.unstact(type="p12")
+    # yay = grouped.unstact(type="p12")
     print(grouped)
 
 # Ukol 4: povrch vozovky
@@ -131,6 +131,6 @@ if __name__ == "__main__":
     # funkce.
     print("Jala Zohan\n")
     df = get_dataframe("accidents.pkl.gz", True)
-    # plot_conseq(df, fig_location="Fotky/04_nasledky.png", show_figure=True)
+    plot_conseq(df, fig_location="Fotky/04_nasledky.png", show_figure=True)
     plot_damage(df, "02_priciny.png", True)
     plot_surface(df, "03_stav.png", True)

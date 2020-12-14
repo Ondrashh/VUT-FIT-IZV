@@ -35,14 +35,17 @@ def get_dataframe(filename: str, verbose: bool = False) -> pd.DataFrame:
         if(verbose == True):
             # Výpis původního využití paměti (1MB = 1048576B) viz. zadání
             print("origin_size={:.1f} MB".format(datas.memory_usage(index=False, deep=True).sum() / 1048576))
-        # Změny typů z obj. na int
 
-        datas = datas[["p2b", "p2a", "p13a", "p13b", "p13c", "region", "p12"]]
+        # Změněn přistup - předtím jsem promazával data a měnil typy
+        # teď mě stačí vlastně jen vzít sloupce, které mě zajímají a u nich upravit dat. typy
+        # Doufám, že je to správný postup
+        datas = datas[["p2b", "p2a", "p13a", "p13b", "p13c", "region", "p12", "p14", "p53"]]
+
+        # Změny typů z obj. na int
         datas["p2b"] = datas["p2b"].astype("int8")
         datas["p13a"] = datas["p13a"].astype("int8")
         datas["p13b"] = datas["p13b"].astype("int8")
         datas["p13c"] = datas["p13c"].astype("int8")
-        # datas.drop(columns=['p32'])
         # Přetypování na datum
         datas["p2a"] = pd.to_datetime(datas["p2a"], format='%Y-%m-%d')
         # Vytvoření nového sloupce dat viz. zadání
@@ -114,14 +117,35 @@ def plot_conseq(df: pd.DataFrame, fig_location: str = None,
 # Ukol3: příčina nehody a škoda
 def plot_damage(df: pd.DataFrame, fig_location: str = None,
                 show_figure: bool = False):
-    grouped = df[["region", "p12"]].groupby(["region", "p12"], as_index=False)
-    # yay = grouped.unstact(type="p12")
-    print(grouped)
+    df["range"] = pd.cut(df["p14"], [-1, 50, 200, 500, 1000, float("inf")], labels=["<50", "50-200", "200-500", "500-1000", ">1000"])
+    df["p12"] = pd.cut(df["p12"], [0, 201, 301, 401, 501, 601, 1000], labels=["nezaviněná řidičem", "nepřiměřená rychlost jízdy", "nesprávné předjíždění", "nedání přednosti v jízdě", "nesprávný způsob jízdy", "technická závada vozidla"])
+    grouped = df[["region", "p12", "p2b", "p14", "range"]].groupby(["region", "p12", "range"], as_index=False).agg({"p2b": "count"})
+    region_HKK = grouped[grouped["region"] == "HKK"]
+    region_JMK = grouped[grouped["region"] == "JMK"]
+    region_OLK = grouped[grouped["region"] == "OLK"]
+    region_OST = grouped[grouped["region"] == "PAK"]
+
+    
+
+
+    # Uložení obrázku podle podmínky, kotrola adresáře a při neexistujícím, vytvoření nového
+    # Musím prvně ukládat, protože jinak se to neuloží
+    if(fig_location != None):
+        d = os.path.dirname(fig_location)
+        # Viz časté chyby v první části
+        if d and not os.path.isdir(d):
+            os.makedirs(d)
+        # Samotné uložení obrázku
+        plt.savefig(fig_location)
+    # Podmínka pro vykreslení grafu
+    if(show_figure == True):
+        fig.show()
+
 
 # Ukol 4: povrch vozovky
 def plot_surface(df: pd.DataFrame, fig_location: str = None,
                  show_figure: bool = False):
-    pass
+    pass;
 
 
 if __name__ == "__main__":
@@ -129,7 +153,6 @@ if __name__ == "__main__":
     # zde je ukazka pouziti, tuto cast muzete modifikovat podle libosti
     # skript nebude pri testovani pousten primo, ale budou volany konkreni ¨
     # funkce.
-    print("Jala Zohan\n")
     df = get_dataframe("accidents.pkl.gz", True)
     plot_conseq(df, fig_location="Fotky/04_nasledky.png", show_figure=True)
     plot_damage(df, "02_priciny.png", True)
